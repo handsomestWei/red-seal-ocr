@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# 虚拟环境
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 日志文件
+logs/*.log
+*.log
+
+# 图片文件（不需要打包到镜像）
+img/
+
+# 模型文件（应该通过挂载提供，不打包到镜像）
+model/
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+docker-run.sh
+
+# 配置文件（应该通过挂载提供，不打包到镜像）
+config.yaml
+config.json
+
+# 其他
+.DS_Store
+*.bak
+*.tmp
+
