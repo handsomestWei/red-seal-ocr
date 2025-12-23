@@ -5,6 +5,130 @@ PaddleOCR安装检测脚本
 import sys
 from pathlib import Path
 import time
+import json
+
+
+def load_config(config_path: str = None) -> dict:
+    """
+    加载配置文件（支持YAML和JSON格式）
+    
+    Args:
+        config_path: 配置文件路径，如果为None则自动查找config.yaml或config.json
+    
+    Returns:
+        配置字典
+    """
+    # 如果未指定路径，自动查找config.yaml或config.json
+    if config_path is None:
+        # 从当前脚本位置向上查找配置文件（可能在项目根目录）
+        script_dir = Path(__file__).parent
+        project_root = script_dir.parent  # util的父目录应该是项目根目录
+        
+        # 先尝试项目根目录
+        config_file = project_root / "config.yaml"
+        if not config_file.exists():
+            config_file = project_root / "config.json"
+        
+        # 如果项目根目录没有，尝试当前目录
+        if not config_file.exists():
+            config_file = Path("config.yaml")
+            if not config_file.exists():
+                config_file = Path("config.json")
+    else:
+        config_file = Path(config_path)
+    
+    if not config_file.exists():
+        # 如果配置文件不存在，返回空配置
+        return {}
+    
+    # 根据文件扩展名选择解析方式
+    if config_file.suffix.lower() in ['.yaml', '.yml']:
+        try:
+            import yaml
+            with open(config_file, 'r', encoding='utf-8') as f:
+                config = yaml.safe_load(f)
+        except ImportError:
+            print("  ⚠️  警告：需要安装PyYAML库才能读取YAML配置文件，使用默认模型列表")
+            return {}
+        except Exception as e:
+            print(f"  ⚠️  警告：无法解析YAML配置文件 {config_path}: {e}，使用默认模型列表")
+            return {}
+    else:
+        # 默认使用JSON格式
+        try:
+            with open(config_file, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+        except Exception as e:
+            print(f"  ⚠️  警告：无法解析JSON配置文件 {config_path}: {e}，使用默认模型列表")
+            return {}
+    
+    return config
+
+
+def get_models_from_config() -> dict:
+    """
+    从配置文件获取需要检查的模型列表
+    
+    Returns:
+        dict: 模型名称到模型描述的映射，例如 {'PP-OCRv5_mobile_det': '文字检测模型'}
+    """
+    config = load_config()
+    
+    # 如果配置文件不存在或无法读取，返回默认模型列表
+    if not config:
+        return {
+            'PP-OCRv5_server_det': '文字检测模型',
+            'PP-OCRv5_server_rec': '文字识别模型',
+            'PP-LCNet_x1_0_textline_ori': '文字方向分类模型',
+            'PP-LCNet_x1_0_doc_ori': '文档方向分类模型',
+            'UVDoc': '文档理解模型'
+        }
+    
+    # 获取OCR性能配置
+    ocr_performance = config.get('ocr_performance', {})
+    
+    # 获取OCR版本（用于确定默认模型系列）
+    ocr_version = ocr_performance.get('ocr_version', 'PP-OCRv5')
+    
+    # 获取模型名称配置
+    text_detection_model_name = ocr_performance.get('text_detection_model_name')
+    text_recognition_model_name = ocr_performance.get('text_recognition_model_name')
+    text_detection_model_dir = ocr_performance.get('text_detection_model_dir')
+    text_recognition_model_dir = ocr_performance.get('text_recognition_model_dir')
+    
+    # 构建模型列表
+    models = {}
+    
+    # 如果定义了检测模型名称且没有指定本地目录，则使用配置的模型
+    if text_detection_model_name and not text_detection_model_dir:
+        models[text_detection_model_name] = '文字检测模型'
+    
+    # 如果定义了识别模型名称且没有指定本地目录，则使用配置的模型
+    if text_recognition_model_name and not text_recognition_model_dir:
+        models[text_recognition_model_name] = '文字识别模型'
+    
+    # 如果配置中没有指定模型，根据ocr_version使用默认模型
+    if not models:
+        # 根据版本确定默认模型
+        if 'v5' in ocr_version.upper() or 'PP-OCRv5' in ocr_version:
+            models['PP-OCRv5_server_det'] = '文字检测模型'
+            models['PP-OCRv5_server_rec'] = '文字识别模型'
+        elif 'v4' in ocr_version.upper() or 'PP-OCRv4' in ocr_version:
+            models['PP-OCRv4_server_det'] = '文字检测模型'
+            models['PP-OCRv4_server_rec'] = '文字识别模型'
+        else:
+            # 默认使用v5
+            models['PP-OCRv5_server_det'] = '文字检测模型'
+            models['PP-OCRv5_server_rec'] = '文字识别模型'
+    
+    # 添加方向分类模型（通常都需要）
+    models['PP-LCNet_x1_0_textline_ori'] = '文字方向分类模型'
+    models['PP-LCNet_x1_0_doc_ori'] = '文档方向分类模型'
+    
+    # 添加文档理解模型（可选，但通常存在）
+    models['UVDoc'] = '文档理解模型'
+    
+    return models
 
 
 def check_paddleocr_installation():
@@ -76,14 +200,8 @@ def check_paddleocr_installation():
         print(f"  检测到新版本模型目录: {paddlex_dir}")
         model_path_used = paddlex_dir
         
-        # 新版本PaddleOCR使用的模型名称
-        new_version_models = {
-            'PP-OCRv5_server_det': '文字检测模型',
-            'PP-OCRv5_server_rec': '文字识别模型',
-            'PP-LCNet_x1_0_textline_ori': '文字方向分类模型',
-            'PP-LCNet_x1_0_doc_ori': '文档方向分类模型',
-            'UVDoc': '文档理解模型'
-        }
+        # 从配置文件获取模型列表
+        new_version_models = get_models_from_config()
         
         for model_dir, model_name in new_version_models.items():
             model_path = paddlex_dir / model_dir

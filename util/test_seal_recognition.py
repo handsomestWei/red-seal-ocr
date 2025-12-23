@@ -12,6 +12,10 @@ PaddleOCR印章文本识别模块测试工具
    - 可通过环境变量设置下载源：PADDLE_PDX_MODEL_SOURCE="bos" 或 "modelscope"
    - 模型会保存到用户目录下的 .paddlex 或 .paddleocr 目录
 
+3. 印章检测-推理模型下载链接（两个源均可下载）
+    - https://paddlepaddle.github.io/PaddleX/latest/module_usage/tutorials/ocr_modules/seal_text_detection.html#_3
+    - https://github.com/PaddlePaddle/PaddleOCR/blob/release/3.0/docs/version3.x/model_list.md
+
 使用方法：
     python util/test_seal_recognition.py [图片路径]
     

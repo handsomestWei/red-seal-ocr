@@ -14,6 +14,7 @@ build/
 venv/
 env/
 ENV/
+.venv/
 
 # IDE
 .vscode/
@@ -21,6 +22,9 @@ ENV/
 *.swp
 *.swo
 *~
+.project
+.pydevproject
+.settings/
 
 # 日志文件和目录
 logs/
@@ -31,25 +35,15 @@ logs/
 ocr_results.txt
 debug_output/
 
-# 图片文件（不需要打包到镜像）
+# 图片文件（测试用，不需要提交）
 img/
+# 注意：如果需要提交文档中的图片，可以单独添加，不在此忽略
 
-# 模型文件（应该通过挂载提供，不打包到镜像）
+# 模型文件（应该通过挂载或下载提供，不提交到仓库）
 model/
-
-# Git
-.git/
-.gitignore
-.gitattributes
-
-# Docker
-Dockerfile
-.dockerignore
-docker-run.sh
-
-# 配置文件（应该通过挂载提供，不打包到镜像）
-config.yaml
-config.json
+*.pdmodel
+*.pdiparams
+*.onnx
 
 # 测试和开发工具
 .pytest_cache/
@@ -58,6 +52,8 @@ config.json
 htmlcov/
 .tox/
 .hypothesis/
+.coverage.*
+*.cover
 
 # 环境变量文件
 .env
@@ -74,8 +70,28 @@ htmlcov/
 *.tar
 *.tar.gz
 
-# 其他
+# 操作系统文件
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# 备份和临时文件
 *.bak
 *.tmp
+*.swp
+*.swo
+*~
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# 配置文件（可选，根据实际情况决定是否提交）
+# config.yaml
+# config.json
 
